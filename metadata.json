@@ -1,6 +1,10 @@
 {
-  "name": "NEXA AI",
-  "description": "One AI. Infinite Possibilities. Next-generation multimodal AI workspace featuring AI Chat, Deep Research, Document AI, Projects, Agents, Coding Lab, Data Analyst, Image Studio, and Voice.",
-  "requestFramePermissions": ["microphone"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "name": "Remix NEXA AI",
+  "description": "One AI. Infinite Possibilities. Next-generation multimodal AI workspace featuring AI Chat with Claude-like Live Artifacts & Split-Screen Interactive Canvas, Deep Research, Document AI, Projects, Agents, Coding Lab, Data Analyst, Image Studio, and Voice.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
