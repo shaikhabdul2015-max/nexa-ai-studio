@@ -1,7 +1,10 @@
 {
   "lint": {
     "rules": {
-      "tags": []
+      "exclude": [
+        "no-explicit-any",
+        "no-window"
+      ]
     }
   }
 }
