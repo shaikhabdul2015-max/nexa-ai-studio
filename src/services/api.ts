@@ -1,45 +1,24 @@
-// यह फ्रंटएंड से सीधे Gemini API को कॉल करेगा
 const aiStudioKey = import.meta.env.VITE_GEMINI_API_KEY || "";
 
 export async function runDeepResearch(prompt: string, mode: string) {
   try {
-    if (!aiStudioKey) {
-      throw new Error("Gemini API Key is missing in Environment Variables!");
-    }
-
-    // सीधे Gemini API को बिना बैकएंड के कॉल करना
-    const url = `https://googleapis.com{aiStudioKey}`;
+    if (!aiStudioKey) throw new Error("API Key missing");
     
-    const response = await fetch(url, {
+    // सीधा गूगल के सर्वर को कॉल (कोई एक्सप्रेस सर्वर नहीं)
+    const response = await fetch(`https://googleapis.com{aiStudioKey}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `You are an expert deep research agent. Provide an exhaustive, structured analysis on the following topic with detailed sections, pros/cons, and verified data checkpoints. Mode: ${mode}\n\nTopic: ${prompt}`
-          }]
-        }]
+        contents: [{ parts: [{ text: `You are a deep research expert. Analyze: ${prompt}. Mode: ${mode}` }] }]
       })
     });
 
     const jsonRes = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(jsonRes.error?.message || "Gemini API Request Failed");
-    }
+    const aiText = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
-    const aiText = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found.";
-
-    // आपके फ्रंटएंड के पुराने स्ट्रक्चर से मैच करने के लिए रिटर्न डेटा फॉर्मेट
-    return {
-      success: true,
-      data: aiText
-    };
+    return { success: true, data: aiText };
   } catch (error: any) {
-    console.error("Gemini Direct Error:", error);
-    throw new Error(error.message || "Failed to generate research");
+    throw new Error(error.message);
   }
 }
 
