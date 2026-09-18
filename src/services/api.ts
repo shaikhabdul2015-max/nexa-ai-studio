@@ -94,7 +94,8 @@ export async function sendChatStream(
 }
 
 export async function sendReasoningRequest(prompt: string, context?: string) {
-  const res = await fetch("/api/reason", {
+  const res = await fetch("https://vercel.app", {
+
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt, context })
