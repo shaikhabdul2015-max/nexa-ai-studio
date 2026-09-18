@@ -4,7 +4,6 @@ export async function runDeepResearch(prompt: string, mode: string) {
   try {
     if (!aiStudioKey) throw new Error("API Key missing");
     
-    // सीधा गूगल के सर्वर को कॉल (कोई एक्सप्रेस सर्वर नहीं)
     const response = await fetch(`https://googleapis.com{aiStudioKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -14,7 +13,9 @@ export async function runDeepResearch(prompt: string, mode: string) {
     });
 
     const jsonRes = await response.json();
-    const aiText = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+    
+    // यहाँ सिंटैक्स को बिल्कुल साफ़ और सही कर दिया गया है
+    const aiText = jsonRes?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
     return { success: true, data: aiText };
   } catch (error: any) {
