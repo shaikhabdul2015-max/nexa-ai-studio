@@ -94,8 +94,8 @@ export async function sendChatStream(
 }
 
 export async function sendReasoningRequest(prompt: string, context?: string) {
-  const res = await fetch("https://vercel.app", {
 
+const res = await fetch("https://vercel.app", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt, context })
@@ -104,6 +104,8 @@ export async function sendReasoningRequest(prompt: string, context?: string) {
   if (!res.ok) throw new Error(data.error || "Reasoning request failed");
   return data;
 }
+
+    
 
 export async function runDeepResearch(
   topic: string,
