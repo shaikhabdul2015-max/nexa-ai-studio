@@ -24,4 +24,8 @@ export async function runDeepResearch(prompt, mode) {
 export async function sendReasoningRequest(prompt) {
   return runDeepResearch(prompt, "reasoning");
 }
+export async function checkSystemHealth() {
+  return { status: "ok" };
+}
+
  
