@@ -25,7 +25,7 @@ import {
   Terminal,
 } from "lucide-react";
 import { ChatAttachment, ChatMessage, AIModel } from "../../types";
-import { sendChatStream, sendReasoningRequest } from "../../services/api";
+import {  sendReasoningRequest } from "../../services/api";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
