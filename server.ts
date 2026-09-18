@@ -16,7 +16,7 @@ import {
   toggleProjectFileEnabled,
   deleteProjectFile,
   buildProjectPromptContext,
-} from "./projectKnowledgeService.ts";
+} from "./projectKnowledgeService";
 
 dotenv.config();
 
