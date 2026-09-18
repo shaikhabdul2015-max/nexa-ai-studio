@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { LanguageCode } from "../../types";
 
-interface NavbarProps {
+interface NavbarProps { 
   onToggleSidebar?: () => void;
 }
 
