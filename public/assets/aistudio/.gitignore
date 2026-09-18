@@ -30,4 +30,6 @@ Thumbs.db
 
 # Temporary files
 *.tmp
-*.temp
+*.temp git add .
+git commit -m "Fix gitignore and prepare Vercel deployment"
+git push origin maingit add .git commit -m "Fix gitignore and prepare Vercel deployment"git push origin main
