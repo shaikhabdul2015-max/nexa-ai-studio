@@ -24,4 +24,3 @@ export async function runDeepResearch(prompt, mode) {
 export async function sendReasoningRequest(prompt) {
   return runDeepResearch(prompt, "reasoning");
 }
- 
