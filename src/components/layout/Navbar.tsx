@@ -1,9 +1,4 @@
-import React from "react";
-import { useApp } from "../../context/AppContext";
-import {
-  Search,
-  Command,
-  Mic,
+
   FolderKanban,
   CheckCircle2,
   AlertCircle,
