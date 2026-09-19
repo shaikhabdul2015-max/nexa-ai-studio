@@ -6,16 +6,46 @@ export interface StreamCallbacks {
   onDone: () => void;
 }
 
+async function parseResponse(response: Response, fallbackMessage: string) {
+  const text = await response.text();
+
+  let data: any = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error ||
+        data?.message ||
+        text ||
+        `${fallbackMessage} (${response.status})`
+    );
+  }
+
+  return data;
+}
+
 export async function checkSystemHealth() {
   try {
-    const res = await fetch("/api/health");
-    if (!res.ok) throw new Error("Health check failed");
-    return await res.json();
+    const res = await fetch("/api/health", {
+      method: "GET",
+      headers: {
+        Accept: "application/json"
+      }
+    });
+
+    const data = await parseResponse(res, "Health check failed");
+
+    return data;
   } catch (err: any) {
     return {
       status: "offline",
       geminiConfigured: false,
-      error: err.message
+      error: err?.message || "Unable to connect to server"
     };
   }
 }
@@ -28,12 +58,20 @@ export async function sendChatStream(
   callbacks: StreamCallbacks,
   signal?: AbortSignal
 ) {
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream"
+      },
       body: JSON.stringify({
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        messages: messages.map((message) => ({
+          role: message.role,
+          content: message.content
+        })),
         model,
         systemInstruction,
         attachments,
@@ -43,108 +81,234 @@ export async function sendChatStream(
     });
 
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.error || `Server responded with status ${response.status}`);
+      const data = await response.json().catch(() => ({}));
+
+      throw new Error(
+        data?.error ||
+          data?.message ||
+          `Server responded with status ${response.status}`
+      );
     }
 
-    const reader = response.body?.getReader();
-    if (!reader) throw new Error("Response body is not readable");
+    if (!response.body) {
+      throw new Error("AI response stream is unavailable");
+    }
 
-    const decoder = new TextDecoder();
+    reader = response.body.getReader();
+
+    const decoder = new TextDecoder("utf-8");
     let buffer = "";
+    let completed = false;
+
+    const finish = () => {
+      if (!completed) {
+        completed = true;
+        callbacks.onDone();
+      }
+    };
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
+
+      if (done) {
+        break;
+      }
 
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n\n");
-      buffer = lines.pop() || "";
 
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          const dataStr = line.replace("data: ", "").trim();
+      const events = buffer.split(/\r?\n\r?\n/);
+      buffer = events.pop() || "";
+
+      for (const event of events) {
+        const lines = event.split(/\r?\n/);
+
+        for (const line of lines) {
+          if (!line.startsWith("data:")) {
+            continue;
+          }
+
+          const dataStr = line.slice(5).trim();
+
+          if (!dataStr) {
+            continue;
+          }
+
           if (dataStr === "[DONE]") {
-            callbacks.onDone();
+            finish();
             return;
           }
+
           try {
             const parsed = JSON.parse(dataStr);
-            if (parsed.error) {
-              callbacks.onError(parsed.error);
+
+            if (parsed?.error) {
+              callbacks.onError(String(parsed.error));
               return;
             }
-            if (parsed.text) {
+
+            if (typeof parsed?.text === "string" && parsed.text.length > 0) {
               callbacks.onChunk(parsed.text);
             }
           } catch {
-            // ignore partial json
+            // Ignore malformed/partial SSE events.
           }
         }
       }
     }
-    callbacks.onDone();
+
+    if (buffer.trim()) {
+      const lines = buffer.split(/\r?\n/);
+
+      for (const line of lines) {
+        if (!line.startsWith("data:")) {
+          continue;
+        }
+
+        const dataStr = line.slice(5).trim();
+
+        if (!dataStr || dataStr === "[DONE]") {
+          continue;
+        }
+
+        try {
+          const parsed = JSON.parse(dataStr);
+
+          if (parsed?.error) {
+            callbacks.onError(String(parsed.error));
+            return;
+          }
+
+          if (typeof parsed?.text === "string" && parsed.text.length > 0) {
+            callbacks.onChunk(parsed.text);
+          }
+        } catch {
+          // Ignore incomplete final event.
+        }
+      }
+    }
+
+    finish();
   } catch (err: any) {
-    if (err.name === "AbortError") {
+    if (err?.name === "AbortError") {
       callbacks.onDone();
-    } else {
-      callbacks.onError(err.message || "Failed to communicate with AI model.");
+      return;
+    }
+
+    callbacks.onError(
+      err?.message || "Failed to communicate with AI model."
+    );
+  } finally {
+    try {
+      reader?.releaseLock();
+    } catch {
+      // Reader may already be released.
     }
   }
 }
 
-export async function sendReasoningRequest(prompt: string, context?: string) {
-
-const res = await fetch("https://vercel.app", {
+/**
+ * AI reasoning request
+ *
+ * Backend route:
+ * POST /api/reason
+ */
+export async function sendReasoningRequest(
+  prompt: string,
+  context?: string
+) {
+  const res = await fetch("/api/reason", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, context })
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      prompt,
+      context: context || ""
+    })
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Reasoning request failed");
-  return data;
+
+  return await parseResponse(res, "Reasoning request failed");
 }
 
-    
-
+/**
+ * Deep Research
+ *
+ * Backend route:
+ * POST /api/research
+ */
 export async function runDeepResearch(
   topic: string,
-  mode: "Quick Research" | "Deep Research" | "Academic Research" | "News Research"
+  mode:
+    | "Quick Research"
+    | "Deep Research"
+    | "Academic Research"
+    | "News Research"
 ) {
+  if (!topic.trim()) {
+    throw new Error("Research topic cannot be empty.");
+  }
+
   const res = await fetch("/api/research", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ topic, mode })
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      topic: topic.trim(),
+      mode
+    })
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Deep research request failed");
-  return data;
+
+  return await parseResponse(res, "Deep research request failed");
 }
 
 export async function runDocumentAnalysis(
   task: string,
   question: string,
-  documents: Array<{ name: string; type: string; content?: string; base64?: string }>
+  documents: Array<{
+    name: string;
+    type: string;
+    content?: string;
+    base64?: string;
+  }>
 ) {
   const res = await fetch("/api/documents/analyze", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ task, question, documents })
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      task,
+      question,
+      documents
+    })
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Document analysis failed");
-  return data;
+
+  return await parseResponse(res, "Document analysis failed");
 }
 
-export async function runDataAnalysis(csvData: string, query?: string, mode?: string) {
+export async function runDataAnalysis(
+  csvData: string,
+  query?: string,
+  mode?: string
+) {
   const res = await fetch("/api/data/analyze", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ csvData, query, mode: mode || "insights" })
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      csvData,
+      query,
+      mode: mode || "insights"
+    })
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Data analysis failed");
-  return data;
+
+  return await parseResponse(res, "Data analysis failed");
 }
 
 export async function runCodeAssist(
@@ -156,12 +320,20 @@ export async function runCodeAssist(
 ) {
   const res = await fetch("/api/code/assist", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, code, language, prompt, fileName })
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      action,
+      code,
+      language,
+      prompt,
+      fileName
+    })
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Coding assistant failed");
-  return data;
+
+  return await parseResponse(res, "Coding assistant failed");
 }
 
 export async function generateHighResImage(
@@ -172,19 +344,36 @@ export async function generateHighResImage(
 ) {
   const res = await fetch("/api/image/generate", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, aspectRatio, imageSize, style })
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      prompt,
+      aspectRatio,
+      imageSize,
+      style
+    })
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Image generation failed");
-  return data;
+
+  return await parseResponse(res, "Image generation failed");
 }
 
-export async function synthesizeTTS(text: string, voice?: string) {
+export async function synthesizeTTS(
+  text: string,
+  voice?: string
+) {
   const res = await fetch("/api/audio/tts", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, voice })
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      text,
+      voice
+    })
   });
-  return await res.json();
+
+  return await parseResponse(res, "Text-to-speech request failed");
 }
