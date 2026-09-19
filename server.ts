@@ -12,12 +12,11 @@ import {
   createProject,
   updateProject,
   deleteProject,
-  addFileToProjectKnowledge,
-  toggleProjectFileEnabled,
-  deleteProjectFile,
-  buildProjectPromptContext,
-} from"./src/services/ProjectKnowledgeService";
+    
+};
 dotenv.config();
+
+
 
 // Multer in-memory upload handler for audio payloads
 const audioUpload = multer({
