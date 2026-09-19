@@ -16,8 +16,7 @@ import {
   toggleProjectFileEnabled,
   deleteProjectFile,
   buildProjectPromptContext,
-} from "./ProjectKnowledgeService";
-
+} from "./src/servicesProjectKnowledgeService";
 dotenv.config();
 
 // Multer in-memory upload handler for audio payloads
