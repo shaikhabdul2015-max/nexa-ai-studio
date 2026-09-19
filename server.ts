@@ -13,7 +13,7 @@ import {
   updateProject,
   deleteProject, 
     
-} from "./src/services/api";
+} from "./src/services/api"; 
   
 dotenv.config();
 
