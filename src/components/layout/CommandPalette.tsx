@@ -542,10 +542,3 @@ export const CommandPalette: React.FC = () => {
 
 export default CommandPalette;
 
-ध्यान दें: ऊपर मैंने "useApp" का import यह मानकर रखा है:
-
-import { useApp } from "../../context/AppContext";
-
-अगर आपके project में "useApp" किसी दूसरी file से export होता है, तो सिर्फ उस import path को अपने project के actual path से बदलना होगा।
-
-और अगर "AppSection" पहले से string union की तरह काम कर रहा है, तो "as AppSection" की जरूरत नहीं होगी। यदि TypeScript error आए, तो आपका "useApp" वाला file/import और "AppSection" type भेज दें—मैं उसी हिसाब से exact version बना दूँगा।
