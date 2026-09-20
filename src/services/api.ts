@@ -376,4 +376,4 @@ export async function synthesizeTTS(
   });
 
   return await parseResponse(res, "Text-to-speech request failed");
-}
+} 
