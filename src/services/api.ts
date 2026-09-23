@@ -383,11 +383,6 @@ export async function getAllProjects() {
   return await parseResponse(res, "Failed to fetch projects");
 }
 
-export async function getProjectById(id: string) {
-  const res = await fetch(`/api/projects/${id}`, { method: "GET" });
-  return await parseResponse(res, `Failed to fetch project ${id}`);
-}
-// --- पुराना जोड़ा हुआ कोड हटाकर इसे लाइन 381 के नीचे पेस्ट करें ---
 
 export async function getAllProjects() {
   const res = await fetch("/api/projects", { method: "GET" });
@@ -421,4 +416,5 @@ export async function deleteProject(id: string) {
   const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
   return await parseResponse(res, "Failed to delete project");
 }
+
 
