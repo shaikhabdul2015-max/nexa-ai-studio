@@ -376,4 +376,37 @@ export async function synthesizeTTS(
   });
 
   return await parseResponse(res, "Text-to-speech request failed");
-} 
+} // --- लाइन 379 के नीचे इसे जोड़ें ---
+
+export async function getAllProjects() {
+  const res = await fetch("/api/projects", { method: "GET" });
+  return await parseResponse(res, "Failed to fetch projects");
+}
+
+export async function getProjectById(id: string) {
+  const res = await fetch(`/api/projects/${id}`, { method: "GET" });
+  return await parseResponse(res, `Failed to fetch project ${id}`);
+}
+
+export async function createProject(data: any) {
+  const res = await fetch("/api/projects", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return await parseResponse(res, "Failed to create project");
+}
+
+export async function updateProject(id: string, data: any) {
+  const res = await fetch(`/api/projects/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return await parseResponse(res, "Failed to update project");
+}
+
+export async function deleteProject(id: string) {
+  const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+  return await parseResponse(res, "Failed to delete project");
+}
