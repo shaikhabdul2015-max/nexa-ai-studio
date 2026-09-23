@@ -376,7 +376,7 @@ export async function synthesizeTTS(
   });
 
   return await parseResponse(res, "Text-to-speech request failed");
-} // --- लाइन 379 के नीचे इसे जोड़ें ---
+} 
 
 export async function getAllProjects() {
   const res = await fetch("/api/projects", { method: "GET" });
