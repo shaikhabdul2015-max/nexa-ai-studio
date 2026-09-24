@@ -1,4 +1,6 @@
-import {
+
+import { Search, Command, Mic } from 'lucide-react'; 
+import { useApp } from '../../context/AppContext'; // Aapke context file ka sahi pathimport {
   FolderKanban,
   CheckCircle2,
   AlertCircle,
