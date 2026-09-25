@@ -1,14 +1,17 @@
 
-import { Search, Command, Mic } from 'lucide-react'; 
-import { useApp } from '../../context/AppContext'; // Aapke context file ka sahi pathimport {
-  FolderKanban,
-  CheckCircle2,
-  AlertCircle,
-  Menu,
-  Moon,
-  Sun,
-  Globe,
+import { 
+  Search, 
+  Command, 
+  Mic, 
+  FolderKanban, 
+  CheckCircle2, 
+  AlertCircle, 
+  Menu, 
+  Moon, 
+  Sun, 
+  Globe 
 } from "lucide-react";
+
 import { LanguageCode } from "../../types";
 
 interface NavbarProps {
