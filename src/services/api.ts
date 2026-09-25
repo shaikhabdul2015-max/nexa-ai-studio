@@ -29,11 +29,9 @@ if (!apiKey) {
 throw new Error("VITE_GEMINI_API_KEY Vercel पर सेट नहीं है।");
 }
 
-// Google Gemini API का लाइव एंडपॉइंट
 const targetModel = model.includes("gemini") ? model : "gemini-2.5-flash";
 const url = https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey};
 
-// Vite / Frontend के हिसाब से डेटा स्ट्रक्चर तैयार करना
 const contents = messages.map(msg => ({
 role: msg.role === "user" ? "user" : "model",
 parts: [{ text: msg.content }]
@@ -55,9 +53,15 @@ throw new Error(errData.error?.message || API Error: ${response.status});
 }
 
 const data = await response.json();
-const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "कोई जवाब नहीं मिला।";
 
-// स्ट्रीम जैसा बर्ताव दिखाने के लिए फ्रंटएंड को चंक भेजना
+// TypeScript को शांत रखने के लिए सुरक्षित ऑब्जेक्ट पाथ का इस्तेमाल
+const candidates = data.candidates;
+let replyText = "कोई जवाब नहीं मिला।";
+
+if (candidates && candidates[0] && candidates[0].content && candidates[0].content.parts && candidates[0].content.parts[0]) {
+replyText = candidates[0].content.parts[0].text || replyText;
+}
+
 callbacks.onChunk(replyText);
 callbacks.onDone();
 
