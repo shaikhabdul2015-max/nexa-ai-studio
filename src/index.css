@@ -1,8 +1,3 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities;
-git add .
-git commit -m "fix: forcing vercel rebuild"
-git push origin main
-
- 
+@tailwind utilities
